@@ -1,0 +1,188 @@
+import tkinter as tk
+from tkinter import messagebox
+from bus_data import get_bus_info, get_village_names, bus_routes
+from PIL import Image, ImageTk
+import os
+import webbrowser
+import sys
+
+# Function to get the absolute path for bundled resources
+def resource_path(relative_path):
+    """ Get the absolute path to a resource, works for dev and for PyInstaller's bundled files """
+    try:
+        # PyInstaller creates a temporary folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# Function to wrap stops across multiple lines
+def format_stops(stops, line_limit=5):
+    formatted_stops = []
+    for i in range(0, len(stops), line_limit):
+        formatted_stops.append(", ".join(stops[i:i + line_limit]))
+    return formatted_stops
+
+# Function to handle the enquiry
+def enquire():
+    input_text = village_entry.get().strip().lower()
+    matching_buses = get_bus_info(input_text)
+
+    if matching_buses:
+        display_bus_info(matching_buses)
+    else:
+        messagebox.showerror("Error", "Invalid Village Name or Stop!")
+
+# Function to display bus info in a new window
+def display_bus_info(buses):
+    result_window = tk.Toplevel(root)
+    result_window.title("Bus Information")
+    result_window.attributes('-fullscreen', True)
+
+    # Create a canvas for scrolling
+    canvas = tk.Canvas(result_window, bg="#E0FFFF")  # Light Aqua background
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    # Create a scrollbar
+    scrollbar = tk.Scrollbar(result_window, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+
+    # Configure the canvas to work with the scrollbar
+    canvas.config(yscrollcommand=scrollbar.set)
+
+    result_frame = tk.Frame(canvas, bg="#E0FFFF")  # Light Aqua background
+    canvas.create_window((0, 0), window=result_frame, anchor="nw")
+
+    for bus in buses:
+        bus_number_label = tk.Label(result_frame, text=f"Bus Number: {bus['bus_number']}",
+                                    font=("Arial", 36, "bold"), fg="#DC143C", bg="#E0FFFF")  # Crimson on Light Aqua
+        bus_number_label.pack(pady=10)
+
+        # Format stops to wrap into multiple lines
+        formatted_stops = format_stops(bus['stops'], line_limit=5)
+
+        for stop_line in formatted_stops:
+            stops_label = tk.Label(result_frame, text=f"Stops: {stop_line}",
+                                   font=("Arial", 15), fg="#1E90FF", bg="#E0FFFF")  # Dodger Blue text
+            stops_label.pack(pady=5)
+
+        driver_name_label = tk.Label(result_frame, text=f"Driver: {bus['driver_name']}",
+                                     font=("Arial", 16), fg="#3CB371", bg="#E0FFFF")  # Medium Sea Green
+        driver_name_label.pack(pady=5)
+
+        driver_contact_label = tk.Label(result_frame, text=f"Contact: {bus['driver_contact']}",
+                                        font=("Arial", 16), fg="#FF8C00", bg="#E0FFFF")  # Dark Orange
+        driver_contact_label.pack(pady=5)
+        
+        # Add the "See Map" button
+        if 'map_link' in bus:
+            map_button = tk.Button(result_frame, text="See Map", font=("Arial", 16), bg="#FF4500", fg="white",
+                                   command=lambda link=bus['map_link']: open_map(link))
+            map_button.pack(pady=10)
+
+    result_frame.update_idletasks()  # Update "requested size" of the frame
+    canvas.config(scrollregion=canvas.bbox("all"))  # Scroll region to encompass all widgets
+
+    # Back button in the result window
+    exit_button = tk.Button(result_window, text="BACK", bg="#FF7F50", fg="white", font=("Arial", 20), width=20, command=result_window.destroy)  # Coral
+    exit_button.pack(side=tk.BOTTOM, pady=20)
+
+# Function to open the map in the default web browser
+def open_map(map_link):
+    webbrowser.open(map_link)
+
+# Function to update the listbox suggestions based on user input
+def update_suggestions(event):
+    input_text = village_entry.get().strip().lower()
+    suggestion_listbox.delete(0, tk.END)
+    village_names = get_village_names()
+    stop_names = get_all_stops()
+    all_names = village_names + stop_names
+
+    # Remove duplicates by converting to a set
+    unique_names = set([name.lower() for name in all_names])
+
+    filtered_suggestions = [name for name in unique_names if name.startswith(input_text)]
+    for suggestion in filtered_suggestions:
+        suggestion_listbox.insert(tk.END, suggestion)
+
+    if filtered_suggestions:
+        suggestion_listbox.place(x=village_entry.winfo_x(), y=village_entry.winfo_y() + village_entry.winfo_height())
+        suggestion_listbox.lift()  # Bring the listbox to the front
+    else:
+        suggestion_listbox.place_forget()
+
+# Function to insert the selected suggestion into the entry field
+def select_suggestion(event):
+    try:
+        selected_index = suggestion_listbox.curselection()
+        if selected_index:  # Check if an item is selected
+            selected_text = suggestion_listbox.get(selected_index)
+            village_entry.delete(0, tk.END)
+            village_entry.insert(0, selected_text)
+            suggestion_listbox.place_forget()  # Hide the listbox
+    except tk.TclError:
+        pass  # Ignore if there's no valid selection
+
+# Function to retrieve all stop names from the bus routes
+def get_all_stops():
+    stops = set()  # Using a set to avoid duplicates
+    for buses in bus_routes.values():
+        for bus in buses:
+            stops.update(bus['stops'])  # Add stops from each bus to the set
+    return list(stops)  # Return as a list
+
+# Create the main window
+root = tk.Tk()
+root.title("Sri Vasavi Engineering College")
+root.configure(bg="#FAFAD2")  # Light Goldenrod background
+root.attributes('-fullscreen', True)
+
+# Create a Canvas for the background
+canvas = tk.Canvas(root, width=root.winfo_screenwidth(), height=root.winfo_screenheight())
+canvas.pack(fill=tk.BOTH, expand=True)
+
+# Load and resize the college logo image
+
+logo_image_path = resource_path("vasavisvec_logo.png")
+logo_image = Image.open(logo_image_path)
+logo_image = logo_image.resize((600, 300), Image.LANCZOS)
+logo_photo = ImageTk.PhotoImage(logo_image)
+
+
+# Create a frame to center the image, label, and button
+center_frame = tk.Frame(canvas, bg="#AFEEEE")  # Pale Turquoise frame background
+center_frame.pack(fill=tk.BOTH, expand=True)
+
+
+college_image_label = tk.Label(center_frame, image=logo_photo, bg="#FAF0E6")  # Linen background
+college_image_label.pack(pady=20)
+
+village_label = tk.Label(center_frame, text="Enter Your Village Name or Stop Name:", bg="#AFEEEE", fg="#483D8B", font=("Arial", 16, "bold"))  # Dark Slate Blue
+village_label.pack()
+
+village_entry = tk.Entry(center_frame, font=("Arial", 14))
+village_entry.pack(pady=10)
+
+# Create a listbox to show suggestions
+suggestion_listbox = tk.Listbox(center_frame, font=("Arial", 12), height=5, width=50, bg="#FFFFFF", selectbackground="#D3D3D3")
+suggestion_listbox.pack()
+suggestion_listbox.place_forget()  # Initially hide the listbox
+
+# Bind the key release event to update suggestions
+village_entry.bind('<KeyRelease>', update_suggestions)
+
+# Bind the listbox selection event
+suggestion_listbox.bind('<<ListboxSelect>>', select_suggestion)
+
+# Create a button to trigger the enquiry
+enquire_button = tk.Button(center_frame, text="Enquire", bg="#FF7F50", fg="white", font=("Arial", 14, "bold"), command=enquire)  # Coral
+enquire_button.pack(pady=20)
+
+# Back button to close the main window
+exit_button = tk.Button(root, text="BACK", font=("Arial", 20), bg="#1E90FF", fg="white", width=20, command=lambda: os._exit(0))  # Dodger Blue
+exit_button.pack(pady=20)
+
+# Start the Tkinter event loop
+root.mainloop()

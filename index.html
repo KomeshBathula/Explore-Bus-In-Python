@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Bus App</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #ffddcc, #ccffff);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center; /* Centering horizontally */
+        }
+        h1 {
+            font-size: 3em;
+            color: #ff4500;
+            margin-top: 0;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        p {
+            font-size: 1.2em;
+            color: #555;
+            max-width: 600px;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+        .button {
+            font-size: 1.5em;
+            padding: 15px 30px;
+            color: white;
+            background-color: #32cd32;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        .button:hover {
+            background-color: #1e90ff;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        footer {
+            font-size: 1.2em;
+            color: #fff;
+            background-color: #ff4500;
+            padding: 10px 0;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.2);
+        }
+        footer:hover {
+            background-color: #ff6347;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        /* For larger screens */
+        @media (min-width: 768px) {
+            h1 {
+                font-size: 4em;
+            }
+            p {
+                font-size: 1.4em;
+            }
+            .button {
+                font-size: 1.7em;
+            }
+            footer {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+    <script>
+        function confirmDownload() {
+            alert("Your download will start shortly!");
+            window.location.href = "https://drive.google.com/file/d/1GdxH3gaQ45SJLzWTAOEil_1e705FnVqT/view?usp=sharing";
+        }
+    </script>
+</head>
+<body>
+    <h1>Welcome to Explore Bus Application</h1>
+    <p>Click the button below to download and run the Explore Bus app, designed for easy and quick bus route access.</p>
+    <button class="button" onclick="confirmDownload()">Download Explore Bus App</button>
+    
+    <footer>By Komesh Bathula</footer>
+</body>
